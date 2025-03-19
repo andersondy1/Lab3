@@ -40,14 +40,14 @@
 --|                 --------------------
 --|                  State | Encoding
 --|                 --------------------
---|                  OFF   | 
---|                  ON    | 
---|                  R1    | 
---|                  R2    | 
---|                  R3    | 
---|                  L1    | 
---|                  L2    | 
---|                  L3    | 
+--|                  OFF   | 000
+--|                  ON    | 111
+--|                  R1    | 001
+--|                  R2    | 010
+--|                  R3    | 011
+--|                  L1    | 100
+--|                  L2    | 101
+--|                  L3    | 110
 --|                 --------------------
 --|
 --|
@@ -85,20 +85,27 @@ library ieee;
   use ieee.std_logic_1164.all;
   use ieee.numeric_std.all;
  
-entity thunderbird_fsm is 
---  port(
-	
---  );
-end thunderbird_fsm;
+
+entity thunderbird_fsm is
+    port (
+        i_clk, i_reset  : in    std_logic;
+        i_left, i_right : in    std_logic;
+        o_lights_L      : out   std_logic_vector(2 downto 0);
+        o_lights_R      : out   std_logic_vector(2 downto 0)
+    );
+end thunderbird_fsm;	
 
 architecture thunderbird_fsm_arch of thunderbird_fsm is 
-
+    signal f_S      : std_logic_vector(2 downto 0):="000";
+    signal f_S_next : std_logic_vector(2 downto 0):="000";
 -- CONSTANTS ------------------------------------------------------------------
   
 begin
 
 	-- CONCURRENT STATEMENTS --------------------------------------------------------	
-	
+	f_S_next(2) <= (not(f_S(2)) and not(f_S(1)) and not(f_S(0)) and i_left) or (f_S(2) and not(f_S(1)));
+	f_S_next(1) <= (f_S(2) and f_S(1) and f_S(0) and i_left and i_right) or (not(f_S(1)) and f_S(0)) or (not(f_S(2)) and f_S(1) and not(f_S(0)));
+	f_S_next(0) <= (not(f_S(2)) and not(f_S(1)) and not(f_S(0)) and i_right) or (not(f_S(2)) and f_S(1) and not(f_S(0))) or (f_S(2) and not(f_S(1)) and not(f_S(0)));
     ---------------------------------------------------------------------------------
 	
 	-- PROCESSES --------------------------------------------------------------------
