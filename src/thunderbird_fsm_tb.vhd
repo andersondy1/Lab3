@@ -72,6 +72,7 @@ architecture test_bench of thunderbird_fsm_tb is
 	signal w_clk : std_logic := '0';
 	signal w_lights_L : std_logic_vector(2 downto 0) := "000";
 	signal w_lights_R : std_logic_vector(2 downto 0) := "000";
+	
 	-- constants
 	constant k_clk_period : time := 10 ns;
 	
@@ -99,7 +100,52 @@ begin
 	-----------------------------------------------------
 	
 	-- Test Plan Process --------------------------------
-	
+	sim_proc : process
+	begin
+	    --testing reset
+        w_reset <= '1';
+        wait for k_clk_period*1;
+            assert w_lights_L  = "000" report "bad reset" severity failure;
+            assert w_lights_R  = "000" report "bad reset" severity failure;
+            
+        w_reset <= '0';
+		wait for k_clk_period*1;
+		
+		--test left blinker
+		w_left <= '1'; wait for k_clk_period;
+		    assert w_lights_L = "001" report "bad left blinker" severity failure;
+        wait for k_clk_period;
+            assert w_lights_L = "011" report "bad left blinker" severity failure;
+        wait for k_clk_period;
+            assert w_lights_L = "111" report "bad left blinker" severity failure;
+        
+        --make sure it doesn't shut off in the middle of the 'animation'
+        wait for k_clk_period*2;
+        w_left <= '0';
+        wait for k_clk_period*2;
+            assert w_lights_L ="111" report "didn't finish correctly" severity failure;
+        
+        --test right blinker
+        w_right <= '1'; wait for k_clk_period;
+        wait for k_clk_period*5;
+            assert w_lights_R = "001" report "bad right blinker" severity failure;
+        wait for k_clk_period;
+            assert w_lights_R = "011" report "bad right blinker" severity failure; 
+            w_right <= '0'; 
+        wait for k_clk_period;
+            assert w_lights_R = "111" report "bad right blinker" severity failure;
+            
+        --turn it off and give it some space 
+     wait for k_clk_period*4;
+        
+        --test the hazards
+        w_left <= '1'; w_right <= '1'; wait for k_clk_period;
+            assert w_lights_R = "111" report "bad hazards" severity failure;
+            assert w_lights_L = "111" report "bad hazards" severity failure;
+      wait for k_clk_period*5; 
+        w_left <= '0'; w_right <= '0'; 
+        wait;
+    end process;
 	-----------------------------------------------------	
 	
 end test_bench;
